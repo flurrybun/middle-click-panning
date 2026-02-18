@@ -1,48 +1,64 @@
-#include "main.hpp"
+#include <Geode/modify/LevelEditorLayer.hpp>
 
-bool isPanning = false;
-int dragButton = Mod::get()->getSettingValue<std::string>("drag-button") == "Right Click" ? GLFW_MOUSE_BUTTON_RIGHT : GLFW_MOUSE_BUTTON_MIDDLE;
+#include <Geode/Geode.hpp>
+using namespace geode::prelude;
 
-$execute {
-    listenForSettingChanges("drag-button", [](std::string value) {
-        dragButton = value == "Right Click" ? GLFW_MOUSE_BUTTON_RIGHT : GLFW_MOUSE_BUTTON_MIDDLE;
-    });
-}
+class $modify(ModLevelEditorLayer, LevelEditorLayer) {
+    struct Fields {
+        ListenerHandle clickListener;
+        CCPoint previousMousePos;
+    };
 
+    $override
+    bool init(GJGameLevel* p0, bool p1) {
+        if (!LevelEditorLayer::init(p0, p1)) return false;
 
-void ModLevelEditorLayer::startPanning() {
-    m_fields->m_previousMousePos = getMousePos();
-}
+        auto dragButton = getDragButton();
 
-void ModLevelEditorLayer::updatePanning() {
-    auto mouseDelta = getMousePos() - m_fields->m_previousMousePos;
-    m_fields->m_previousMousePos = getMousePos();
+        m_fields->clickListener = MouseInputEvent().listen([this, dragButton](MouseInputData& data) {
+            if (data.button != dragButton) return;
 
-    m_objectLayer->setPosition(m_objectLayer->getPosition() + mouseDelta);
+            if (data.action == MouseInputData::Action::Press) {
+                startPanning();
+            } else if (data.action == MouseInputData::Action::Release) {
+                stopPanning();
+            }
+        });
 
-    m_editorUI->constrainGameLayerPosition(-100, -100);
-    m_editorUI->updateSlider();
-}
-
-
-void ModCCEGLView::onGLFWMouseCallBack(GLFWwindow* window, int button, int action, int mods) {
-    CCEGLView::onGLFWMouseCallBack(window, button, action, mods);
-    if (button != dragButton) return;
-
-    isPanning = action == GLFW_PRESS;
-
-    if (auto lel = LevelEditorLayer::get()) {
-        static_cast<ModLevelEditorLayer*>(lel)->startPanning();
+        return true;
     }
-}
 
-void ModCCEGLView::onGLFWMouseMoveCallBack(GLFWwindow* window, double x, double y) {
-    CCEGLView::onGLFWMouseMoveCallBack(window, x, y);
-    if (!isPanning) return;
+    void startPanning() {
+        m_fields->previousMousePos = getMousePos();
+        schedule(schedule_selector(ModLevelEditorLayer::updatePanning));
+    }
 
-    if (isPanning) {
-        if (auto lel = LevelEditorLayer::get()) {
-            static_cast<ModLevelEditorLayer*>(lel)->updatePanning();
+    void stopPanning() {
+        unschedule(schedule_selector(ModLevelEditorLayer::updatePanning));
+    }
+
+    void updatePanning(float dt) {
+        CCPoint mouseDelta = getMousePos() - m_fields->previousMousePos;
+        m_fields->previousMousePos = getMousePos();
+
+        m_objectLayer->setPosition(m_objectLayer->getPosition() + mouseDelta);
+
+        m_editorUI->constrainGameLayerPosition(-100, -100);
+        m_editorUI->updateSlider();
+    }
+
+    MouseInputData::Button getDragButton() {
+        switch (hash(Mod::get()->getSettingValue<std::string>("drag-button"))) {
+            case hash("Right Click"):
+                return MouseInputData::Button::Right;
+            case hash("Middle Click"):
+                return MouseInputData::Button::Middle;
+            case hash("Side Button 1"):
+                return MouseInputData::Button::Button4;
+            case hash("Side Button 2"):
+                return MouseInputData::Button::Button5;
         }
+
+        return MouseInputData::Button::Right;
     }
-}
+};

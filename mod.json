@@ -1,15 +1,16 @@
 {
-    "geode": "4.1.0",
+    "geode": "5.0.0-beta.3",
     "gd": {
-        "win": "2.2074"
+        "win": "2.2081",
+        "mac": "2.2081"
     },
     "id": "ninkaz.middle-click-panning",
     "name": "Middle Click Panning",
-    "version": "v1.0.1",
+    "version": "v1.1.0",
     "developer": "NinKaz",
     "description": "Make moving through the editor easier",
     "tags": [
-        "editor", "utility", "enhancement", "offline"
+        "editor", "enhancement", "offline"
     ],
     "links": {
         "source": "https://github.com/flurrybun/middle-click-panning"
@@ -20,7 +21,9 @@
             "type": "string",
             "one-of": [
                 "Right Click",
-                "Middle Click"
+                "Middle Click",
+                "Side Button 1",
+                "Side Button 2"
             ],
             "default": "Middle Click"
         }
