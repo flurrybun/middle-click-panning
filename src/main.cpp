@@ -6,7 +6,7 @@ using namespace geode::prelude;
 class $modify(ModLevelEditorLayer, LevelEditorLayer) {
     struct Fields {
         ListenerHandle clickListener;
-        CCPoint previousMousePos;
+        CCPoint prevMousePos;
     };
 
     $override
@@ -16,7 +16,7 @@ class $modify(ModLevelEditorLayer, LevelEditorLayer) {
         auto dragButton = getDragButton();
 
         m_fields->clickListener = MouseInputEvent().listen([this, dragButton](MouseInputData& data) {
-            if (data.button != dragButton) return;
+            if (data.button != dragButton || m_playbackMode == PlaybackMode::Playing) return;
 
             if (data.action == MouseInputData::Action::Press) {
                 startPanning();
@@ -29,7 +29,7 @@ class $modify(ModLevelEditorLayer, LevelEditorLayer) {
     }
 
     void startPanning() {
-        m_fields->previousMousePos = getMousePos();
+        m_fields->prevMousePos = getMousePos();
         schedule(schedule_selector(ModLevelEditorLayer::updatePanning));
     }
 
@@ -38,8 +38,13 @@ class $modify(ModLevelEditorLayer, LevelEditorLayer) {
     }
 
     void updatePanning(float dt) {
-        CCPoint mouseDelta = getMousePos() - m_fields->previousMousePos;
-        m_fields->previousMousePos = getMousePos();
+        if (m_playbackMode == PlaybackMode::Playing) {
+            stopPanning();
+            return;
+        }
+
+        CCPoint mouseDelta = getMousePos() - m_fields->prevMousePos;
+        m_fields->prevMousePos = getMousePos();
 
         m_objectLayer->setPosition(m_objectLayer->getPosition() + mouseDelta);
 
