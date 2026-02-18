@@ -47,6 +47,7 @@ class $modify(ModLevelEditorLayer, LevelEditorLayer) {
         m_fields->prevMousePos = getMousePos();
 
         m_objectLayer->setPosition(m_objectLayer->getPosition() + mouseDelta);
+        m_editorUI->m_swipeStart += mouseDelta;
 
         m_editorUI->constrainGameLayerPosition(-100, -100);
         m_editorUI->updateSlider();
