@@ -1,6 +1,13 @@
+# 1.0.2
+
+- Updated to Geode v5 (2.2081)
+- Added Mac support
+- Added setting the panning key to side buttons
+- Fixed the selection box sticking while panning
+
 # 1.0.1
 
-- Remove unnecessary mod info
+- Removed unnecessary mod info
 
 # 1.0.0
 
