@@ -1,3 +1,7 @@
+# 1.0.3
+
+- Fixed some objects lagging behind by a frame when panning
+
 # 1.0.2
 
 - Updated to Geode v5 (2.2081)
