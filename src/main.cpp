@@ -6,7 +6,9 @@ using namespace geode::prelude;
 class $modify(ModLevelEditorLayer, LevelEditorLayer) {
     struct Fields {
         ListenerHandle clickListener;
+        ListenerHandle moveListener;
         CCPoint prevMousePos;
+        bool isPanning = false;
     };
 
     $override
@@ -25,26 +27,36 @@ class $modify(ModLevelEditorLayer, LevelEditorLayer) {
             }
         });
 
+        m_fields->moveListener = MouseMoveEvent().listen([this](int32_t x, int32_t y) {
+            // the x and y params are evil
+
+            updatePanning();
+        });
+
         return true;
     }
 
     void startPanning() {
         m_fields->prevMousePos = getMousePos();
-        schedule(schedule_selector(ModLevelEditorLayer::updatePanning));
+        m_fields->isPanning = true;
     }
 
     void stopPanning() {
-        unschedule(schedule_selector(ModLevelEditorLayer::updatePanning));
+        m_fields->isPanning = false;
     }
 
-    void updatePanning(float dt) {
+    void updatePanning() {
+        if (!m_fields->isPanning) return;
+
         if (m_playbackMode == PlaybackMode::Playing) {
             stopPanning();
             return;
         }
 
-        CCPoint mouseDelta = getMousePos() - m_fields->prevMousePos;
-        m_fields->prevMousePos = getMousePos();
+        auto mousePos = getMousePos();
+
+        CCPoint mouseDelta = mousePos - m_fields->prevMousePos;
+        m_fields->prevMousePos = mousePos;
 
         m_objectLayer->setPosition(m_objectLayer->getPosition() + mouseDelta);
         m_editorUI->m_swipeStart += mouseDelta;
